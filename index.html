@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ComisionistaPRO</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0f1117; --bg2:#161b27; --bg3:#1e2535; --surface:#242c3d; --border:#2e3a52;
+    --accent:#4f8ef7; --accent2:#38d9a9; --accent3:#f7a94f; --danger:#f76f6f;
+    --text:#e8ecf4; --text2:#8b99b5; --text3:#5a6785;
+    --font:'DM Sans',sans-serif; --mono:'DM Mono',monospace; --r:10px; --r2:6px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+
+  /* SCREENS */
+  .screen{display:none;}
+  .screen.active{display:flex;}
+
+  /* LOADING */
+  #loading{display:none;position:fixed;inset:0;background:rgba(15,17,23,.88);align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:16px;}
+  #loading.show{display:flex;}
+  .spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading-txt{color:var(--text2);font-size:13px;}
+
+  /* SETUP */
+  #screen-setup{min-height:100vh;align-items:center;justify-content:center;background:radial-gradient(ellipse at 60% 30%,#1a2a4a 0%,#0f1117 70%);}
+  .setup-box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:40px;width:500px;max-width:calc(100vw - 32px);}
+
+  /* AUTH */
+  #screen-auth{min-height:100vh;align-items:center;justify-content:center;background:radial-gradient(ellipse at 40% 60%,#1a2a4a 0%,#0f1117 70%);}
+  .auth-box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:40px;width:380px;max-width:calc(100vw - 32px);}
+  .auth-tabs{display:flex;gap:4px;background:var(--bg3);border-radius:var(--r2);padding:4px;margin-bottom:24px;}
+  .auth-tab{flex:1;padding:8px;border:none;background:none;color:var(--text2);font-family:var(--font);font-size:13px;font-weight:500;border-radius:4px;cursor:pointer;transition:all .2s;}
+  .auth-tab.active{background:var(--surface);color:var(--text);}
+
+  /* APP */
+  #screen-app{flex-direction:column;min-height:100vh;}
+  header{background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;height:56px;gap:12px;position:sticky;top:0;z-index:100;}
+  .logo{font-size:18px;font-weight:600;color:var(--accent);letter-spacing:-.5px;white-space:nowrap;}
+  nav{display:flex;gap:4px;overflow-x:auto;}
+  .nav-btn{background:none;border:none;color:var(--text2);padding:8px 12px;border-radius:var(--r2);cursor:pointer;font-family:var(--font);font-size:13px;font-weight:500;transition:all .2s;white-space:nowrap;}
+  .nav-btn:hover{background:var(--bg3);color:var(--text);}
+  .nav-btn.active{background:var(--surface);color:var(--accent);}
+  .spacer{flex:1;}
+  .user-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0;}
+
+  /* PANELS */
+  .panel{display:none;padding:24px;max-width:1200px;margin:0 auto;width:100%;}
+  .panel.active{display:block;}
+  .panel-title{font-size:20px;font-weight:600;margin-bottom:20px;letter-spacing:-.3px;}
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:16px;}
+  .card-title{font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px;}
+
+  /* FORMS */
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .form-grid.cols3{grid-template-columns:1fr 1fr 1fr;}
+  .form-group{display:flex;flex-direction:column;gap:6px;}
+  .form-group.full{grid-column:1/-1;}
+  label{font-size:12px;color:var(--text2);font-weight:500;}
+  input,select,textarea{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r2);color:var(--text);padding:9px 12px;font-family:var(--font);font-size:13px;outline:none;transition:border-color .2s;width:100%;}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+  textarea{resize:vertical;min-height:70px;}
+  select option{background:var(--bg3);}
+
+  /* BUTTONS */
+  .btn{cursor:pointer;font-family:var(--font);font-size:14px;font-weight:500;border:none;border-radius:var(--r2);padding:10px 18px;transition:all .2s;}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:#3a7de8;}
+  .btn-block{width:100%;padding:12px;}
+  .btn-sm{padding:6px 14px;font-size:13px;}
+  .btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2);}
+  .btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger);}
+  .btn-success{background:#1c3d2a;border:1px solid var(--accent2);color:var(--accent2);}
+
+  /* TABLE */
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;}
+  th{text-align:left;padding:10px 14px;font-size:11px;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);}
+  td{padding:11px 14px;border-bottom:1px solid rgba(46,58,82,.4);font-size:13px;vertical-align:middle;}
+  tr:hover td{background:rgba(79,142,247,.03);}
+
+  /* BADGES */
+  .badge{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:500;display:inline-block;}
+  .badge-blue{background:#0d2040;color:var(--accent);border:1px solid #1a3a6a;}
+  .badge-green{background:#0d2d1a;color:var(--accent2);border:1px solid #1a5a35;}
+  .badge-orange{background:#2d1f0d;color:var(--accent3);border:1px solid #5a3a1a;}
+  .badge-red{background:#2d0d0d;color:var(--danger);border:1px solid #5a1a1a;}
+  .badge-gray{background:var(--bg3);color:var(--text3);border:1px solid var(--border);}
+
+  /* METRICS */
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+  .metric{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;}
+  .metric-val{font-size:26px;font-weight:600;font-family:var(--mono);}
+  .metric-lbl{font-size:11px;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:.5px;}
+  .metric.accent .metric-val{color:var(--accent);}
+  .metric.green .metric-val{color:var(--accent2);}
+  .metric.orange .metric-val{color:var(--accent3);}
+  .metric.red .metric-val{color:var(--danger);}
+
+  /* MAP */
+  #map-svg{width:100%;border-radius:var(--r);background:var(--bg3);border:1px solid var(--border);}
+
+  /* ROUTE STOPS */
+  .parada{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:14px;}
+  .parada.entregado{opacity:.5;}
+  .parada-num{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;}
+  .parada-info{flex:1;}
+  .parada-name{font-weight:500;font-size:13px;}
+  .parada-detail{font-size:12px;color:var(--text2);margin-top:2px;}
+  .parada-nota{font-size:11px;color:var(--accent3);margin-top:4px;font-style:italic;}
+
+  /* PRODUCTS */
+  .product-row{display:flex;gap:8px;align-items:center;margin-bottom:6px;}
+  .product-row select{flex:3;}
+  .product-row input[type=number]{flex:1;}
+  .product-row .btn{flex-shrink:0;}
+
+  /* AI */
+  .ai-result{background:#0d1a1f;border:1px solid #1a3a4a;border-radius:var(--r);padding:16px;margin-top:12px;}
+  .ai-result-row{display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;}
+  .ai-result-row strong{color:var(--text2);}
+
+  /* TOAST */
+  #toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 20px;font-size:13px;color:var(--text);z-index:9999;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none;max-width:320px;}
+  #toast.show{transform:translateY(0);opacity:1;}
+  #toast.ok{border-color:var(--accent2);}
+  #toast.err{border-color:var(--danger);}
+
+  /* MODAL */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:28px;width:520px;max-width:calc(100vw - 32px);max-height:90vh;overflow-y:auto;}
+  .modal-title{font-size:16px;font-weight:600;margin-bottom:20px;}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
+
+  /* SQL */
+  .sql-block{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:14px;font-size:11px;font-family:var(--mono);color:var(--text2);overflow-x:auto;line-height:1.7;white-space:pre;}
+
+  /* SEARCH ROW */
+  .search-row{display:flex;gap:10px;margin-bottom:16px;align-items:center;}
+  .search-row input{flex:1;}
+
+  /* INFO BOX */
+  .info-box{background:#0d1a2d;border:1px solid #1a3a6a;border-radius:var(--r);padding:14px 18px;font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px;}
+
+  @media(max-width:700px){
+    .metrics{grid-template-columns:1fr 1fr;}
+    .form-grid,.form-grid.cols3{grid-template-columns:1fr;}
+    header{padding:0 12px;}
+    .panel{padding:14px;}
+    .map-route-grid{grid-template-columns:1fr!important;}
+  }
+</style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="loading-txt" id="loading-txt">Cargando...</div>
+</div>
+
+<!-- ══════════════ SCREEN: SETUP ══════════════ -->
+<div id="screen-setup" class="screen">
+  <div class="setup-box">
+    <div style="font-size:26px;font-weight:600;color:var(--accent);letter-spacing:-1px;margin-bottom:4px;">ComisionistaPRO</div>
+    <div style="color:var(--text2);font-size:13px;margin-bottom:24px;">Primera vez — conectá tu base de datos Supabase</div>
+
+    <div class="info-box">
+      <strong style="color:var(--accent);">Necesitás una cuenta gratuita en Supabase</strong><br>
+      1. Creá un proyecto en <strong>supabase.com</strong><br>
+      2. Pegá tus credenciales abajo<br>
+      3. Ejecutá el SQL de abajo en el <em>SQL Editor</em> de Supabase
+    </div>
+
+    <div class="form-group" style="margin-bottom:12px;">
+      <label>Supabase URL</label>
+      <input type="text" id="setup-url" placeholder="https://xxxxxxxx.supabase.co" style="font-family:var(--mono);font-size:12px;">
+    </div>
+    <div class="form-group" style="margin-bottom:20px;">
+      <label>Anon Key (clave pública)</label>
+      <input type="text" id="setup-key" placeholder="eyJhbGci..." style="font-family:var(--mono);font-size:12px;">
+    </div>
+
+    <button class="btn btn-primary btn-block" onclick="setupGuardar()">Guardar y continuar →</button>
+    <div id="setup-err" style="display:none;margin-top:12px;font-size:12px;color:var(--danger);"></div>
+
+    <div style="margin-top:28px;padding-top:20px;border-top:1px solid var(--border);">
+      <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:10px;">SQL para crear las tablas (copiá y ejecutá en Supabase → SQL Editor):</div>
+      <div class="sql-block" id="setup-sql-block"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SCREEN: AUTH ══════════════ -->
+<div id="screen-auth" class="screen">
+  <div class="auth-box">
+    <div style="font-size:24px;font-weight:600;color:var(--accent);text-align:center;letter-spacing:-1px;margin-bottom:4px;">ComisionistaPRO</div>
+    <div style="color:var(--text2);font-size:13px;text-align:center;margin-bottom:24px;">Gestión para comisionistas</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login" onclick="switchTab('login')">Ingresar</button>
+      <button class="auth-tab" id="tab-reg" onclick="switchTab('reg')">Crear cuenta</button>
+    </div>
+
+    <!-- Login -->
+    <div id="form-login">
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Email</label>
+        <input type="email" id="l-email" placeholder="tu@email.com" autocomplete="email">
+      </div>
+      <div class="form-group" style="margin-bottom:20px;">
+        <label>Contraseña</label>
+        <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="doLogin()">Ingresar</button>
+      <div id="l-err" style="display:none;margin-top:12px;font-size:12px;color:var(--danger);"></div>
+    </div>
+
+    <!-- Register -->
+    <div id="form-reg" style="display:none;">
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Tu nombre o empresa</label>
+        <input type="text" id="r-nombre" placeholder="Ej: Juan Pérez - Distribuidora Norte">
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Email</label>
+        <input type="email" id="r-email" placeholder="tu@email.com" autocomplete="email">
+      </div>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label>Contraseña</label>
+        <input type="password" id="r-pass" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+      </div>
+      <div class="form-group" style="margin-bottom:20px;">
+        <label>Confirmar contraseña</label>
+        <input type="password" id="r-pass2" placeholder="Repetir contraseña">
+      </div>
+      <button class="btn btn-primary btn-block" onclick="doRegister()">Crear mi cuenta</button>
+      <div id="r-err" style="display:none;margin-top:12px;font-size:12px;color:var(--danger);"></div>
+      <div id="r-ok" style="display:none;margin-top:12px;font-size:12px;color:var(--accent2);"></div>
+    </div>
+
+    <div style="margin-top:20px;text-align:center;">
+      <button class="btn btn-sm btn-outline" onclick="resetConfig()" style="font-size:11px;">⚙ Cambiar base de datos</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ SCREEN: APP ══════════════ -->
+<div id="screen-app" class="screen" style="flex-direction:column;">
+  <header>
+    <div class="logo">ComisionistaPRO</div>
+    <nav>
+      <button class="nav-btn active" onclick="showPanel('dashboard',this)">Dashboard</button>
+      <button class="nav-btn" onclick="showPanel('destinos',this)">Destinos</button>
+      <button class="nav-btn" onclick="showPanel('pedido',this)">Nuevo Pedido</button>
+      <button class="nav-btn" onclick="showPanel('recorrido',this)">Recorrido</button>
+      <button class="nav-btn" onclick="showPanel('pedidos',this)">Mis Pedidos</button>
+      <button class="nav-btn" onclick="showPanel('config',this)">Config</button>
+    </nav>
+    <div class="spacer"></div>
+    <div class="user-avatar" id="user-avatar">?</div>
+    <button class="btn btn-sm btn-outline" onclick="doLogout()">Salir</button>
+  </header>
+
+  <!-- DASHBOARD -->
+  <div class="panel active" id="panel-dashboard">
+    <div class="panel-title" id="dash-greeting">Bienvenido</div>
+    <div class="metrics">
+      <div class="metric accent"><div class="metric-val" id="dash-destinos">0</div><div class="metric-lbl">Destinos</div></div>
+      <div class="metric orange"><div class="metric-val" id="dash-pendientes">0</div><div class="metric-lbl">Pendientes</div></div>
+      <div class="metric green"><div class="metric-val" id="dash-hoy">0</div><div class="metric-lbl">Entregados hoy</div></div>
+      <div class="metric"><div class="metric-val" id="dash-facturado">$0</div><div class="metric-lbl">Facturado total</div></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+      <button class="btn btn-primary" onclick="goNewPedido()">+ Nuevo pedido</button>
+      <button class="btn btn-outline" onclick="goDestinos()">+ Agregar destino</button>
+      <button class="btn btn-outline" onclick="goRecorrido()">Ver recorrido de hoy</button>
+    </div>
+    <div class="card">
+      <div class="card-title">Pedidos de hoy</div>
+      <div id="dash-hoy-list"></div>
+    </div>
+  </div>
+
+  <!-- DESTINOS -->
+  <div class="panel" id="panel-destinos">
+    <div class="panel-title">Mis Destinos</div>
+    <div class="search-row">
+      <input type="text" id="dest-search" placeholder="Buscar por nombre, zona, domicilio..." oninput="renderDestinos()">
+      <button class="btn btn-primary btn-sm" onclick="abrirModalDestino()">+ Nuevo Destino</button>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>Nombre</th><th>Domicilio</th><th>Zona</th><th>Teléfono</th><th>Notas</th><th>Estado</th><th>Acciones</th>
+          </tr></thead>
+          <tbody id="destinos-tbody">
+            <tr><td colspan="7" style="text-align:center;color:var(--text3);padding:32px;">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- NUEVO PEDIDO -->
+  <div class="panel" id="panel-pedido">
+    <div class="panel-title">Nuevo Pedido</div>
+    <div class="card">
+      <div class="card-title">Datos del pedido</div>
+      <div class="form-grid cols3">
+        <div class="form-group">
+          <label>Destino / Cliente</label>
+          <select id="ped-cliente" onchange="onClienteSelect()">
+            <option value="">— Seleccionar destino —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Turno</label>
+          <select id="ped-turno">
+            <option value="mañana">Mañana</option>
+            <option value="tarde">Tarde</option>
+            <option value="acordar">A acordar</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Fecha</label>
+          <input type="date" id="ped-fecha">
+        </div>
+      </div>
+      <div id="notas-cliente-box" style="display:none;margin-top:10px;background:#2d1f0d;border:1px solid #5a3a1a;border-radius:6px;padding:10px 14px;">
+        <span style="font-size:11px;color:var(--accent3);font-weight:600;">⚠ NOTAS DEL DESTINO: </span>
+        <span id="notas-cliente-txt" style="font-size:12px;color:var(--accent3);"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Productos</div>
+      <div id="productos-list"></div>
+      <button class="btn btn-outline btn-sm" onclick="addProductRow()" style="margin-top:8px;">+ Agregar producto</button>
+      <div style="text-align:right;margin-top:12px;font-size:16px;font-weight:600;">
+        Total: <span style="color:var(--accent);font-family:var(--mono);" id="total-display">$0</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Aclaración / Notas</div>
+      <textarea id="ped-aclaracion" placeholder="Ej: Dejar en puerta trasera, tocar timbre, cobrar con tarjeta..."></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
+        <input type="text" id="ai-key" placeholder="Claude API Key (opcional — para análisis IA)" style="flex:1;font-family:var(--mono);font-size:12px;">
+        <button class="btn btn-outline btn-sm" onclick="analizarIA()">🤖 Analizar IA</button>
+      </div>
+      <div id="ai-result-box" style="display:none;"></div>
+    </div>
+
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-primary" onclick="guardarPedido()">✓ Guardar Pedido</button>
+      <button class="btn btn-outline" onclick="limpiarPedido()">Limpiar</button>
+    </div>
+  </div>
+
+  <!-- RECORRIDO -->
+  <div class="panel" id="panel-recorrido">
+    <div class="panel-title">Recorrido de Hoy</div>
+    <div class="metrics">
+      <div class="metric accent"><div class="metric-val" id="rut-paradas">0</div><div class="metric-lbl">Paradas</div></div>
+      <div class="metric orange"><div class="metric-val" id="rut-alta">0</div><div class="metric-lbl">Alta prioridad</div></div>
+      <div class="metric green"><div class="metric-val" id="rut-entregados">0</div><div class="metric-lbl">Entregados</div></div>
+      <div class="metric"><div class="metric-val" id="rut-total">$0</div><div class="metric-lbl">Total recorrido</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" class="map-route-grid">
+      <div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button class="btn btn-primary btn-sm" onclick="optimizarRuta()">🗺️ Optimizar ruta</button>
+          <select id="zona-filtro" onchange="optimizarRuta()" style="font-size:13px;padding:6px 10px;">
+            <option value="">Todas las zonas</option>
+            <option>Norte</option><option>Sur</option><option>Centro</option><option>Este</option><option>Oeste</option>
+          </select>
+        </div>
+        <div id="paradas-list"></div>
+      </div>
+      <div>
+        <svg id="map-svg" viewBox="0 0 400 350" xmlns="http://www.w3.org/2000/svg">
+          <rect width="400" height="350" fill="#1e2535"/>
+          <text x="200" y="175" fill="#5a6785" text-anchor="middle" font-size="13" font-family="DM Sans">Presioná "Optimizar ruta"</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- MIS PEDIDOS -->
+  <div class="panel" id="panel-pedidos">
+    <div class="panel-title">Mis Pedidos</div>
+    <div class="metrics">
+      <div class="metric accent"><div class="metric-val" id="db-total">0</div><div class="metric-lbl">Total</div></div>
+      <div class="metric green"><div class="metric-val" id="db-entregados">0</div><div class="metric-lbl">Entregados</div></div>
+      <div class="metric orange"><div class="metric-val" id="db-pendientes">0</div><div class="metric-lbl">Pendientes</div></div>
+      <div class="metric"><div class="metric-val" id="db-facturado">$0</div><div class="metric-lbl">Facturado</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center;">
+      <button class="btn btn-outline btn-sm" onclick="exportCSV()">⬇ Exportar CSV</button>
+      <select id="filtro-estado" onchange="renderPedidos()" style="font-size:13px;padding:6px 10px;">
+        <option value="">Todos los estados</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="en ruta">En ruta</option>
+        <option value="entregado">Entregado</option>
+      </select>
+      <input type="date" id="filtro-fecha" onchange="renderPedidos()" style="font-size:13px;padding:6px 10px;width:auto;">
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Fecha</th><th>Destino</th><th>Zona</th><th>Productos</th><th>Total</th><th>Turno</th><th>Estado</th><th>Aclaración</th><th></th>
+          </tr></thead>
+          <tbody id="pedidos-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIG -->
+  <div class="panel" id="panel-config">
+    <div class="panel-title">Configuración</div>
+
+    <div class="card">
+      <div class="card-title">Mi cuenta</div>
+      <p style="font-size:13px;color:var(--text2);">Email: <strong style="color:var(--text);" id="cfg-email">—</strong></p>
+      <p style="font-size:13px;color:var(--text2);margin-top:8px;">Nombre: <strong style="color:var(--text);" id="cfg-nombre">—</strong></p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Catálogo de productos</div>
+      <div id="catalogo-list"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <input type="text" id="cat-nombre" placeholder="Nombre del producto" style="flex:2;">
+        <input type="number" id="cat-precio" placeholder="Precio" style="flex:1;">
+        <button class="btn btn-outline btn-sm" onclick="agregarProducto()">+ Agregar</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Base de datos</div>
+      <p style="font-size:12px;color:var(--text3);font-family:var(--mono);" id="cfg-db-url">—</p>
+      <button class="btn btn-sm btn-danger" onclick="resetConfig()" style="margin-top:12px;">Cambiar configuración</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">SQL de referencia</div>
+      <div class="sql-block" id="cfg-sql-block"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: DESTINO -->
+<div class="modal-overlay" id="modal-destino">
+  <div class="modal">
+    <div class="modal-title" id="modal-dest-title">Nuevo Destino</div>
+    <input type="hidden" id="md-id">
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Nombre *</label>
+        <input type="text" id="md-nombre" placeholder="Ej: Almacén Don Pedro">
+      </div>
+      <div class="form-group full">
+        <label>Domicilio *</label>
+        <input type="text" id="md-domicilio" placeholder="Ej: Av. Mitre 1234">
+      </div>
+      <div class="form-group">
+        <label>Zona</label>
+        <select id="md-zona">
+          <option>Centro</option><option>Norte</option><option>Sur</option><option>Este</option><option>Oeste</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Teléfono</label>
+        <input type="text" id="md-tel" placeholder="Ej: 2494-123456">
+      </div>
+      <div class="form-group">
+        <label>Latitud</label>
+        <input type="number" id="md-lat" placeholder="-37.32" step="0.0001">
+      </div>
+      <div class="form-group">
+        <label>Longitud</label>
+        <input type="number" id="md-lng" placeholder="-59.14" step="0.0001">
+      </div>
+      <div class="form-group full">
+        <label>Notas permanentes</label>
+        <textarea id="md-notas" placeholder="Ej: No llamar antes de las 9hs. Paga en efectivo. Acceso por el fondo."></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarDestino()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ── SQL SETUP ──────────────────────────────────────────────
+const SQL = `-- Ejecutá esto en Supabase → SQL Editor
+
+CREATE TABLE IF NOT EXISTS clientes (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     UUID REFERENCES auth.users(id) NOT NULL,
+  nombre      TEXT NOT NULL,
+  domicilio   TEXT,
+  zona        TEXT DEFAULT 'Centro',
+  telefono    TEXT,
+  notas       TEXT,
+  lat         DECIMAL,
+  lng         DECIMAL,
+  activo      BOOLEAN DEFAULT true,
+  created_at  TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE clientes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS cp_clientes ON clientes;
+CREATE POLICY cp_clientes ON clientes FOR ALL
+  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+CREATE TABLE IF NOT EXISTS pedidos (
+  id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id        UUID REFERENCES auth.users(id) NOT NULL,
+  cliente_id     UUID REFERENCES clientes(id),
+  cliente_nombre TEXT,
+  zona           TEXT,
+  domicilio      TEXT,
+  lat            DECIMAL,
+  lng            DECIMAL,
+  productos      JSONB DEFAULT '[]',
+  total          DECIMAL DEFAULT 0,
+  turno          TEXT DEFAULT 'mañana',
+  fecha          DATE,
+  aclaracion     TEXT,
+  prioridad      TEXT DEFAULT 'media',
+  estado         TEXT DEFAULT 'pendiente',
+  created_at     TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE pedidos ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS cp_pedidos ON pedidos;
+CREATE POLICY cp_pedidos ON pedidos FOR ALL
+  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+CREATE TABLE IF NOT EXISTS catalogo (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID REFERENCES auth.users(id) NOT NULL,
+  nombre     TEXT NOT NULL,
+  precio     DECIMAL NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE catalogo ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS cp_catalogo ON catalogo;
+CREATE POLICY cp_catalogo ON catalogo FOR ALL
+  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);`;
+
+// ── STATE ──────────────────────────────────────────────────
+let SB = null;
+let user = null;
+let DB = { clientes: [], pedidos: [], catalogo: [] };
+let editDestinoId = null;
+
+// ── UTILS ──────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const fmt = n => (n || 0).toLocaleString('es-AR', { minimumFractionDigits: 0 });
+
+function loading(show, txt = 'Cargando...') {
+  $('loading-txt').textContent = txt;
+  $('loading').classList.toggle('show', show);
+}
+
+function toast(msg, tipo = 'ok') {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'show ' + tipo;
+  clearTimeout(t._t);
+  t._t = setTimeout(() => { t.className = ''; }, 3200);
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(('screen-' + name)).classList.add('active');
+}
+
+// ── CONFIG PERSISTENCE ─────────────────────────────────────
+function loadCfg() {
+  try { return JSON.parse(localStorage.getItem('cp_cfg') || 'null'); } catch { return null; }
+}
+function saveCfg(url, key) {
+  localStorage.setItem('cp_cfg', JSON.stringify({ url, key }));
+}
+function resetConfig() {
+  localStorage.removeItem('cp_cfg');
+  SB = null; user = null;
+  showScreen('setup');
+}
+
+// ── SETUP ──────────────────────────────────────────────────
+function setupGuardar() {
+  const url = $('setup-url').value.trim();
+  const key = $('setup-key').value.trim();
+  const err = $('setup-err');
+  err.style.display = 'none';
+
+  if (!url || !key) {
+    err.textContent = 'Completá los dos campos.';
+    err.style.display = 'block';
+    return;
+  }
+  if (!url.startsWith('https://')) {
+    err.textContent = 'La URL debe comenzar con https://';
+    err.style.display = 'block';
+    return;
+  }
+
+  saveCfg(url, key);
+  SB = supabase.createClient(url, key);
+  showScreen('auth');
+}
+
+// ── AUTH TABS ──────────────────────────────────────────────
+function switchTab(tab) {
+  $('form-login').style.display = tab === 'login' ? 'block' : 'none';
+  $('form-reg').style.display   = tab === 'reg'   ? 'block' : 'none';
+  $('tab-login').classList.toggle('active', tab === 'login');
+  $('tab-reg').classList.toggle('active', tab === 'reg');
+}
+
+// ── LOGIN ──────────────────────────────────────────────────
+async function doLogin() {
+  const email = $('l-email').value.trim();
+  const pass  = $('l-pass').value;
+  const err   = $('l-err');
+  err.style.display = 'none';
+
+  if (!email || !pass) { err.textContent = 'Completá email y contraseña.'; err.style.display = 'block'; return; }
+
+  loading(true, 'Iniciando sesión...');
+  const { data, error } = await SB.auth.signInWithPassword({ email, password: pass });
+  loading(false);
+
+  if (error) { err.textContent = authErr(error.message); err.style.display = 'block'; return; }
+  user = data.user;
+  await bootApp();
+}
+
+// ── REGISTER ───────────────────────────────────────────────
+async function doRegister() {
+  const nombre = $('r-nombre').value.trim();
+  const email  = $('r-email').value.trim();
+  const pass   = $('r-pass').value;
+  const pass2  = $('r-pass2').value;
+  const err    = $('r-err');
+  const ok     = $('r-ok');
+  err.style.display = 'none';
+  ok.style.display  = 'none';
+
+  if (!nombre || !email || !pass) { err.textContent = 'Completá todos los campos.'; err.style.display = 'block'; return; }
+  if (pass !== pass2) { err.textContent = 'Las contraseñas no coinciden.'; err.style.display = 'block'; return; }
+  if (pass.length < 6) { err.textContent = 'La contraseña debe tener al menos 6 caracteres.'; err.style.display = 'block'; return; }
+
+  loading(true, 'Creando cuenta...');
+  const { data, error } = await SB.auth.signUp({ email, password: pass, options: { data: { nombre } } });
+  loading(false);
+
+  if (error) { err.textContent = authErr(error.message); err.style.display = 'block'; return; }
+
+  if (data.session) {
+    user = data.user;
+    await bootApp();
+  } else {
+    ok.textContent = '✓ Cuenta creada. Revisá tu email para confirmar, luego ingresá.';
+    ok.style.display = 'block';
+    switchTab('login');
+    $('l-email').value = email;
+  }
+}
+
+function authErr(m) {
+  if (m.includes('Invalid login')) return 'Email o contraseña incorrectos.';
+  if (m.includes('already registered')) return 'Ya existe una cuenta con ese email.';
+  if (m.includes('not confirmed')) return 'Confirmá tu email antes de ingresar.';
+  if (m.includes('Password')) return 'Contraseña muy corta (mínimo 6 caracteres).';
+  return m;
+}
+
+// ── LOGOUT ─────────────────────────────────────────────────
+async function doLogout() {
+  await SB.auth.signOut();
+  user = null;
+  DB = { clientes: [], pedidos: [], catalogo: [] };
+  showScreen('auth');
+}
+
+// ── BOOT APP ───────────────────────────────────────────────
+async function bootApp() {
+  loading(true, 'Cargando tus datos...');
+  const ok = await loadData();
+  loading(false);
+
+  if (!ok) {
+    toast('⚠ Ejecutá el SQL en Supabase primero (ver Config → SQL de referencia)', 'err');
+  }
+
+  const nombre = user.user_metadata?.nombre || user.email?.split('@')[0] || 'Usuario';
+  $('user-avatar').textContent = nombre.charAt(0).toUpperCase();
+  $('cfg-email').textContent   = user.email;
+  $('cfg-nombre').textContent  = nombre;
+  $('cfg-db-url').textContent  = loadCfg()?.url || '—';
+
+  const h = new Date().getHours();
+  const gr = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+  $('dash-greeting').textContent = `${gr}, ${nombre}`;
+
+  $('ped-fecha').value = new Date().toISOString().split('T')[0];
+
+  // Restore saved AI key
+  const savedKey = localStorage.getItem('cp_aikey');
+  if (savedKey) $('ai-key').value = savedKey;
+  $('ai-key').addEventListener('change', e => localStorage.setItem('cp_aikey', e.target.value));
+
+  showScreen('app');
+  showPanel('dashboard', document.querySelector('.nav-btn'));
+  renderCatalogo();
+  addProductRow();
+}
+
+// ── DATA LOADING ───────────────────────────────────────────
+async function loadData() {
+  const [c, p, cat] = await Promise.all([
+    SB.from('clientes').select('*').order('nombre'),
+    SB.from('pedidos').select('*').order('created_at', { ascending: false }),
+    SB.from('catalogo').select('*').order('nombre'),
+  ]);
+
+  if (c.error?.message?.includes('does not exist')) return false;
+
+  DB.clientes = c.data || [];
+  DB.pedidos  = p.data || [];
+  DB.catalogo = cat.data || [];
+  return true;
+}
+
+// ── NAVIGATION ─────────────────────────────────────────────
+function showPanel(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  $('panel-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'destinos')  renderDestinos();
+  if (id === 'recorrido') optimizarRuta();
+  if (id === 'pedidos')   renderPedidos();
+}
+
+function goNewPedido()  { showPanel('pedido', document.querySelectorAll('.nav-btn')[2]); }
+function goDestinos()   { showPanel('destinos', document.querySelectorAll('.nav-btn')[1]); }
+function goRecorrido()  { showPanel('recorrido', document.querySelectorAll('.nav-btn')[3]); }
+
+// ── DASHBOARD ──────────────────────────────────────────────
+function renderDashboard() {
+  const hoy = new Date().toISOString().split('T')[0];
+  const pendientes   = DB.pedidos.filter(p => p.estado !== 'entregado').length;
+  const entregHoy    = DB.pedidos.filter(p => p.fecha === hoy && p.estado === 'entregado').length;
+  const facturado    = DB.pedidos.reduce((s, p) => s + (p.total || 0), 0);
+
+  $('dash-destinos').textContent  = DB.clientes.filter(c => c.activo).length;
+  $('dash-pendientes').textContent = pendientes;
+  $('dash-hoy').textContent        = entregHoy;
+  $('dash-facturado').textContent  = '$' + fmt(facturado);
+
+  const pedHoy = DB.pedidos.filter(p => p.fecha === hoy);
+  if (!pedHoy.length) {
+    $('dash-hoy-list').innerHTML = `<p style="color:var(--text3);font-size:13px;">Sin pedidos para hoy. <button class="btn btn-sm btn-outline" onclick="goNewPedido()">Crear uno</button></p>`;
+    return;
+  }
+  $('dash-hoy-list').innerHTML = pedHoy.map(p => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(46,58,82,.4);">
+      <div style="flex:1;">
+        <div style="font-weight:500;font-size:13px;">${p.cliente_nombre}</div>
+        <div style="font-size:12px;color:var(--text2);">${p.domicilio || ''} · ${p.turno}</div>
+      </div>
+      <span style="font-family:var(--mono);color:var(--accent);">$${fmt(p.total)}</span>
+      <span class="badge ${p.estado === 'entregado' ? 'badge-green' : p.estado === 'en ruta' ? 'badge-blue' : 'badge-gray'}">${p.estado}</span>
+    </div>`).join('');
+}
+
+// ── DESTINOS RENDER ────────────────────────────────────────
+function renderDestinos() {
+  const q = ($('dest-search').value || '').toLowerCase();
+  const lista = DB.clientes.filter(c =>
+    c.nombre.toLowerCase().includes(q) ||
+    (c.zona || '').toLowerCase().includes(q) ||
+    (c.domicilio || '').toLowerCase().includes(q)
+  );
+
+  if (!lista.length) {
+    $('destinos-tbody').innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:32px;">${DB.clientes.length ? 'Sin resultados.' : 'Todavía no cargaste destinos. Hacé clic en "+ Nuevo Destino".'}</td></tr>`;
+    return;
+  }
+
+  $('destinos-tbody').innerHTML = lista.map(c => `
+    <tr>
+      <td><strong>${c.nombre}</strong></td>
+      <td>${c.domicilio || '—'}</td>
+      <td><span class="badge badge-blue">${c.zona || '—'}</span></td>
+      <td>${c.telefono || '—'}</td>
+      <td style="max-width:180px;font-size:12px;color:var(--text2);">${c.notas || '—'}</td>
+      <td><span class="badge ${c.activo ? 'badge-green' : 'badge-gray'}">${c.activo ? 'Activo' : 'Inactivo'}</span></td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-sm btn-outline" onclick="abrirModalDestino('${c.id}')" style="margin-right:4px;">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="toggleBajaDestino('${c.id}')">${c.activo ? 'Dar baja' : 'Activar'}</button>
+      </td>
+    </tr>`).join('');
+}
+
+function onClienteSelect() {
+  const id = $('ped-cliente').value;
+  const c  = DB.clientes.find(x => x.id === id);
+  if (c && c.notas) {
+    $('notas-cliente-txt').textContent = c.notas;
+    $('notas-cliente-box').style.display = 'block';
+  } else {
+    $('notas-cliente-box').style.display = 'none';
+  }
+}
+
+function renderSelectClientes() {
+  const sel = $('ped-cliente');
+  const val = sel.value;
+  sel.innerHTML = '<option value="">— Seleccionar destino —</option>';
+  DB.clientes.filter(c => c.activo).forEach(c => {
+    const o = document.createElement('option');
+    o.value = c.id;
+    o.textContent = `${c.nombre} (${c.zona})`;
+    sel.appendChild(o);
+  });
+  sel.value = val;
+}
+
+// ── DESTINOS CRUD ──────────────────────────────────────────
+function abrirModalDestino(id = null) {
+  editDestinoId = id;
+  $('modal-dest-title').textContent = id ? 'Editar Destino' : 'Nuevo Destino';
+  if (id) {
+    const c = DB.clientes.find(x => x.id === id);
+    if (c) {
+      $('md-nombre').value  = c.nombre    || '';
+      $('md-domicilio').value = c.domicilio || '';
+      $('md-zona').value    = c.zona      || 'Centro';
+      $('md-tel').value     = c.telefono  || '';
+      $('md-lat').value     = c.lat       || '';
+      $('md-lng').value     = c.lng       || '';
+      $('md-notas').value   = c.notas     || '';
+    }
+  } else {
+    ['md-nombre','md-domicilio','md-tel','md-lat','md-lng','md-notas'].forEach(fid => $(fid).value = '');
+    $('md-zona').value = 'Centro';
+  }
+  $('modal-destino').classList.add('open');
+}
+
+function cerrarModal() { $('modal-destino').classList.remove('open'); }
+
+async function guardarDestino() {
+  const nombre = $('md-nombre').value.trim();
+  if (!nombre) { toast('Ingresá el nombre del destino', 'err'); return; }
+
+  const datos = {
+    user_id:   user.id,
+    nombre,
+    domicilio: $('md-domicilio').value.trim(),
+    zona:      $('md-zona').value,
+    telefono:  $('md-tel').value.trim(),
+    lat:       parseFloat($('md-lat').value) || null,
+    lng:       parseFloat($('md-lng').value) || null,
+    notas:     $('md-notas').value.trim(),
+    activo:    true,
+  };
+
+  loading(true, 'Guardando destino...');
+  let error;
+
+  if (editDestinoId) {
+    const res = await SB.from('clientes').update(datos).eq('id', editDestinoId);
+    error = res.error;
+    if (!error) {
+      const idx = DB.clientes.findIndex(c => c.id === editDestinoId);
+      if (idx >= 0) DB.clientes[idx] = { ...DB.clientes[idx], ...datos };
+    }
+  } else {
+    const res = await SB.from('clientes').insert(datos).select().single();
+    error = res.error;
+    if (!error) DB.clientes.push(res.data);
+  }
+
+  loading(false);
+  if (error) { toast('Error: ' + error.message, 'err'); return; }
+
+  cerrarModal();
+  renderDestinos();
+  renderSelectClientes();
+  toast(editDestinoId ? 'Destino actualizado ✓' : 'Destino agregado ✓');
+}
+
+async function toggleBajaDestino(id) {
+  const c = DB.clientes.find(x => x.id === id);
+  if (!c) return;
+  const activo = !c.activo;
+  const { error } = await SB.from('clientes').update({ activo }).eq('id', id);
+  if (error) { toast('Error: ' + error.message, 'err'); return; }
+  c.activo = activo;
+  renderDestinos();
+  toast(activo ? 'Destino activado' : 'Destino dado de baja');
+}
+
+// ── CATÁLOGO ───────────────────────────────────────────────
+function renderCatalogo() {
+  const div = $('catalogo-list');
+  if (!DB.catalogo.length) {
+    div.innerHTML = '<p style="font-size:13px;color:var(--text3);margin-bottom:8px;">Sin productos. Agregá uno abajo.</p>';
+    return;
+  }
+  div.innerHTML = DB.catalogo.map(p => `
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;font-size:13px;">
+      <span style="flex:2;">${p.nombre}</span>
+      <span style="color:var(--accent);font-family:var(--mono);flex:1;">$${fmt(p.precio)}</span>
+      <button class="btn btn-sm btn-danger" onclick="eliminarProducto('${p.id}')">✕</button>
+    </div>`).join('');
+}
+
+async function agregarProducto() {
+  const nombre = $('cat-nombre').value.trim();
+  const precio = parseFloat($('cat-precio').value);
+  if (!nombre || !precio) { toast('Nombre y precio requeridos', 'err'); return; }
+
+  const { data, error } = await SB.from('catalogo').insert({ user_id: user.id, nombre, precio }).select().single();
+  if (error) { toast('Error: ' + error.message, 'err'); return; }
+  DB.catalogo.push(data);
+  DB.catalogo.sort((a, b) => a.nombre.localeCompare(b.nombre));
+  $('cat-nombre').value = '';
+  $('cat-precio').value = '';
+  renderCatalogo();
+  toast('Producto agregado ✓');
+}
+
+async function eliminarProducto(id) {
+  const { error } = await SB.from('catalogo').delete().eq('id', id);
+  if (error) { toast('Error: ' + error.message, 'err'); return; }
+  DB.catalogo = DB.catalogo.filter(p => p.id !== id);
+  renderCatalogo();
+}
+
+// ── PRODUCTOS EN PEDIDO ────────────────────────────────────
+function addProductRow() {
+  const cont = $('productos-list');
+  const div  = document.createElement('div');
+  div.className = 'product-row';
+  const opts = DB.catalogo.map(p =>
+    `<option value="${p.precio}" data-nombre="${p.nombre}">${p.nombre} — $${fmt(p.precio)}</option>`
+  ).join('');
+  div.innerHTML = `
+    <select onchange="calcTotal()" style="flex:3;">
+      <option value="">— Producto —</option>${opts}
+    </select>
+    <input type="number" min="1" value="1" onchange="calcTotal()" style="flex:1;text-align:center;">
+    <button class="btn btn-sm btn-danger" onclick="this.parentElement.remove();calcTotal()">✕</button>`;
+  cont.appendChild(div);
+}
+
+function calcTotal() {
+  let total = 0;
+  document.querySelectorAll('#productos-list .product-row').forEach(row => {
+    const precio = parseFloat(row.querySelector('select').value) || 0;
+    const cant   = parseInt(row.querySelector('input').value)   || 0;
+    total += precio * cant;
+  });
+  $('total-display').textContent = '$' + fmt(total);
+  return total;
+}
+
+function getPedidoProductos() {
+  const items = [];
+  document.querySelectorAll('#productos-list .product-row').forEach(row => {
+    const sel    = row.querySelector('select');
+    const precio = parseFloat(sel.value) || 0;
+    const cant   = parseInt(row.querySelector('input').value) || 0;
+    if (precio > 0 && cant > 0) {
+      const nombre = sel.options[sel.selectedIndex].getAttribute('data-nombre') || '';
+      items.push({ nombre, cantidad: cant, precio, subtotal: precio * cant });
+    }
+  });
+  return items;
+}
+
+// ── IA ─────────────────────────────────────────────────────
+async function analizarIA() {
+  const acl = $('ped-aclaracion').value.trim();
+  const key = $('ai-key').value.trim();
+  const box = $('ai-result-box');
+  if (!acl) { toast('Escribí una aclaración primero', 'err'); return; }
+
+  if (!key) {
+    const pri = /urgente|hoy|rápido|apurado/i.test(acl) ? 'alta' : /mañana|tarde|después/i.test(acl) ? 'baja' : 'media';
+    const cond = [];
+    if (/tarjeta|débito|crédito/i.test(acl)) cond.push('Pago con tarjeta');
+    if (/efectivo/i.test(acl)) cond.push('Pago en efectivo');
+    if (/fondo|trasera|portero|timbre/i.test(acl)) cond.push('Acceso especial');
+    if (/frío|heladera|refriger/i.test(acl)) cond.push('Cadena de frío');
+    box.style.display = 'block';
+    box.innerHTML = `<div class="ai-result">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:10px;">⚡ Análisis automático</div>
+      <div class="ai-result-row"><strong>Prioridad:</strong> <span class="badge ${pri === 'alta' ? 'badge-red' : pri === 'baja' ? 'badge-gray' : 'badge-orange'}">${pri.toUpperCase()}</span></div>
+      <div class="ai-result-row"><strong>Condiciones:</strong> <span style="font-size:12px;">${cond.length ? cond.join(', ') : 'Ninguna especial'}</span></div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;font-style:italic;">Ingresá tu Claude API Key para análisis más preciso.</div>
+    </div>`;
+    return;
+  }
+
+  box.style.display = 'block';
+  box.innerHTML = '<div class="ai-result"><div style="color:var(--text3);font-size:12px;">🤖 Analizando...</div></div>';
+
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'content-type': 'application/json', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001', max_tokens: 300,
+        messages: [{ role: 'user', content: `Analizá esta aclaración de un cliente para un reparto: "${acl}"\n\nRespondé SOLO con JSON válido: {"prioridad":"alta|media|baja","condiciones":"texto breve","horario":"texto o vacío","nota_repartidor":"instrucción clara","alerta":true|false}` }]
+      })
+    });
+    const json = JSON.parse((await r.json()).content[0].text.replace(/```json|```/g, '').trim());
+    box.innerHTML = `<div class="ai-result">
+      <div style="font-size:11px;color:var(--accent2);margin-bottom:10px;">🤖 Análisis IA completado</div>
+      <div class="ai-result-row"><strong>Prioridad:</strong> <span class="badge ${json.prioridad === 'alta' ? 'badge-red' : json.prioridad === 'baja' ? 'badge-gray' : 'badge-orange'}">${json.prioridad.toUpperCase()}</span></div>
+      <div class="ai-result-row"><strong>Condiciones:</strong> <span style="font-size:12px;">${json.condiciones}</span></div>
+      ${json.horario ? `<div class="ai-result-row"><strong>Horario:</strong> <span style="font-size:12px;">${json.horario}</span></div>` : ''}
+      <div class="ai-result-row"><strong>Nota:</strong> <span style="font-size:12px;font-style:italic;">${json.nota_repartidor}</span></div>
+      ${json.alerta ? `<div style="background:#2d1010;border:1px solid var(--danger);border-radius:6px;padding:8px;font-size:12px;color:var(--danger);margin-top:8px;">⚠ Requiere atención especial</div>` : ''}
+    </div>`;
+  } catch (e) {
+    box.innerHTML = `<div class="ai-result"><div style="color:var(--danger);font-size:12px;">Error: ${e.message}</div></div>`;
+  }
+}
+
+// ── GUARDAR PEDIDO ─────────────────────────────────────────
+async function guardarPedido() {
+  const cid = $('ped-cliente').value;
+  if (!cid) { toast('Seleccioná un destino', 'err'); return; }
+  const cliente = DB.clientes.find(c => c.id === cid);
+  const prods   = getPedidoProductos();
+  if (!prods.length) { toast('Agregá al menos un producto', 'err'); return; }
+  const total = calcTotal();
+
+  const pedido = {
+    user_id:        user.id,
+    cliente_id:     cid,
+    cliente_nombre: cliente.nombre,
+    zona:           cliente.zona,
+    domicilio:      cliente.domicilio,
+    lat:            cliente.lat,
+    lng:            cliente.lng,
+    productos:      prods,
+    total,
+    turno:          $('ped-turno').value,
+    fecha:          $('ped-fecha').value,
+    aclaracion:     $('ped-aclaracion').value.trim(),
+    prioridad:      'media',
+    estado:         'pendiente',
+  };
+
+  loading(true, 'Guardando pedido...');
+  const { data, error } = await SB.from('pedidos').insert(pedido).select().single();
+  loading(false);
+  if (error) { toast('Error: ' + error.message, 'err'); return; }
+
+  DB.pedidos.unshift(data);
+  toast('Pedido guardado ✓');
+  limpiarPedido();
+}
+
+function limpiarPedido() {
+  $('ped-cliente').value     = '';
+  $('ped-aclaracion').value  = '';
+  $('productos-list').innerHTML = '';
+  $('ai-result-box').style.display   = 'none';
+  $('notas-cliente-box').style.display = 'none';
+  $('total-display').textContent = '$0';
+  $('ped-fecha').value = new Date().toISOString().split('T')[0];
+  addProductRow();
+}
+
+// ── RECORRIDO ──────────────────────────────────────────────
+function optimizarRuta() {
+  const zona = $('zona-filtro').value;
+  let peds   = DB.pedidos.filter(p => p.estado !== 'entregado');
+  if (zona) peds = peds.filter(p => p.zona === zona);
+
+  if (!peds.length) {
+    $('paradas-list').innerHTML = '<p style="color:var(--text3);font-size:13px;padding:16px 0;">Sin pedidos pendientes.</p>';
+    renderMapa([]);
+    ['rut-paradas','rut-alta','rut-entregados'].forEach(id => $(id).textContent = '0');
+    $('rut-total').textContent = '$0';
+    return;
+  }
+
+  // Nearest-neighbor heuristic
+  const ruta = [];
+  let rest   = [...peds];
+  let actual = rest.shift();
+  ruta.push(actual);
+  while (rest.length) {
+    rest.sort((a, b) => dist(actual, a) - dist(actual, b));
+    actual = rest.shift();
+    ruta.push(actual);
+  }
+
+  $('rut-paradas').textContent   = ruta.length;
+  $('rut-alta').textContent      = ruta.filter(p => p.prioridad === 'alta').length;
+  $('rut-entregados').textContent = ruta.filter(p => p.estado === 'entregado').length;
+  $('rut-total').textContent     = '$' + fmt(ruta.reduce((s, p) => s + (p.total || 0), 0));
+
+  $('paradas-list').innerHTML = ruta.map((p, i) => `
+    <div class="parada ${p.estado === 'entregado' ? 'entregado' : ''}">
+      <div class="parada-num" style="${p.prioridad === 'alta' ? 'background:var(--danger)' : ''}">${i + 1}</div>
+      <div class="parada-info">
+        <div class="parada-name">${p.cliente_nombre}</div>
+        <div class="parada-detail">${p.domicilio || '—'} · ${p.turno} · <span style="font-family:var(--mono);color:var(--accent);">$${fmt(p.total)}</span></div>
+        ${p.aclaracion ? `<div class="parada-nota">📝 ${p.aclaracion.slice(0, 60)}${p.aclaracion.length > 60 ? '…' : ''}</div>` : ''}
+      </div>
+      <button class="btn btn-sm ${p.estado === 'entregado' ? 'btn-outline' : 'btn-success'}" onclick="toggleEntregado('${p.id}')">
+        ${p.estado === 'entregado' ? '↩ Deshacer' : '✓ Entregado'}
+      </button>
+    </div>`).join('');
+
+  renderMapa(ruta);
+}
+
+function dist(a, b) {
+  return Math.hypot((a.lat || 0) - (b.lat || 0), (a.lng || 0) - (b.lng || 0));
+}
+
+async function toggleEntregado(id) {
+  const p   = DB.pedidos.find(x => x.id === id);
+  if (!p) return;
+  const est = p.estado === 'entregado' ? 'en ruta' : 'entregado';
+  const { error } = await SB.from('pedidos').update({ estado: est }).eq('id', id);
+  if (error) { toast('Error: ' + error.message, 'err'); return; }
+  p.estado = est;
+  optimizarRuta();
+}
+
+function renderMapa(peds) {
+  const svg = $('map-svg');
+  if (!peds.length) {
+    svg.innerHTML = `<rect width="400" height="350" fill="#1e2535" rx="8"/><text x="200" y="175" fill="#5a6785" text-anchor="middle" font-size="13" font-family="DM Sans">Sin pedidos</text>`;
+    return;
+  }
+  const lats = peds.map(p => p.lat || 0), lngs = peds.map(p => p.lng || 0);
+  const [mnLat, mxLat] = [Math.min(...lats), Math.max(...lats)];
+  const [mnLng, mxLng] = [Math.min(...lngs), Math.max(...lngs)];
+  const pad = 40, W = 400, H = 350;
+  const sx = (mxLng - mnLng) < .001 ? 1 : (W - 2 * pad) / (mxLng - mnLng);
+  const sy = (mxLat - mnLat) < .001 ? 1 : (H - 2 * pad) / (mxLat - mnLat);
+  const tx = lng => Math.round(pad + (lng - mnLng) * sx);
+  const ty = lat => Math.round(H - pad - (lat - mnLat) * sy);
+  const col = { Centro:'#4f8ef7', Norte:'#38d9a9', Sur:'#f7a94f', Este:'#f76f6f', Oeste:'#c47df7' };
+
+  let lines = '';
+  for (let i = 1; i < peds.length; i++) {
+    const [a, b] = [peds[i-1], peds[i]];
+    lines += `<line x1="${tx(a.lng||0)}" y1="${ty(a.lat||0)}" x2="${tx(b.lng||0)}" y2="${ty(b.lat||0)}" stroke="#2e3a52" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+  }
+
+  const circles = peds.map((p, i) => {
+    const [x, y] = [tx(p.lng || 0), ty(p.lat || 0)];
+    const c = col[p.zona] || '#4f8ef7';
+    return `<circle cx="${x}" cy="${y}" r="${p.prioridad === 'alta' ? 14 : 12}" fill="${p.estado === 'entregado' ? '#2e3a52' : c}" stroke="#0f1117" stroke-width="2"/>
+      <text x="${x}" y="${y+4}" text-anchor="middle" font-size="10" font-weight="600" fill="${p.estado === 'entregado' ? '#5a6785' : '#fff'}" font-family="DM Sans">${i+1}</text>`;
+  }).join('');
+
+  svg.innerHTML = `<rect width="400" height="350" fill="#1e2535" rx="8"/>${lines}${circles}`;
+}
+
+// ── MIS PEDIDOS ────────────────────────────────────────────
+function renderPedidos() {
+  const fEst  = $('filtro-estado').value;
+  const fFech = $('filtro-fecha').value;
+  let lista   = DB.pedidos;
+  if (fEst)  lista = lista.filter(p => p.estado === fEst);
+  if (fFech) lista = lista.filter(p => p.fecha  === fFech);
+
+  const entregados = DB.pedidos.filter(p => p.estado === 'entregado').length;
+  const pendientes = DB.pedidos.filter(p => p.estado !== 'entregado').length;
+  const facturado  = DB.pedidos.reduce((s, p) => s + (p.total || 0), 0);
+
+  $('db-total').textContent     = DB.pedidos.length;
+  $('db-entregados').textContent = entregados;
+  $('db-pendientes').textContent = pendientes;
+  $('db-facturado').textContent  = '$' + fmt(facturado);
+
+  const tbody = $('pedidos-tbody');
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--text3);padding:32px;">Sin pedidos.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = lista.map((p, i) => `
+    <tr>
+      <td style="color:var(--text3);font-size:11px;">#${i+1}</td>
+      <td style="font-size:12px;">${p.fecha || '—'}</td>
+      <td><strong>${p.cliente_nombre}</strong></td>
+      <td><span class="badge badge-blue">${p.zona || '—'}</span></td>
+      <td style="font-size:12px;color:var(--text2);">${Array.isArray(p.productos) ? p.productos.map(x => `${x.cantidad}x ${x.nombre}`).join(', ') : '—'}</td>
+      <td style="font-family:var(--mono);color:var(--accent);">$${fmt(p.total)}</td>
+      <td><span class="badge badge-gray">${p.turno}</span></td>
+      <td>
+        <select style="font-size:11px;padding:3px 6px;" onchange="cambiarEstado('${p.id}', this.value)">
+          <option ${p.estado==='pendiente'  ?'selected':''} value="pendiente">Pendiente</option>
+          <option ${p.estado==='en ruta'    ?'selected':''} value="en ruta">En ruta</option>
+          <option ${p.estado==='entregado'  ?'selected':''} value="entregado">Entregado</option>
+        </select>
+      </td>
+      <td style="font-size:11px;color:var(--text2);max-width:140px;overflow:hidden;text-overflow:ellipsis;">${p.aclaracion || '—'}</td>
+      <td><button class="btn btn-sm btn-danger" onclick="eliminarPedido('${p.id}')">✕</button></td>
+    </tr>`).join('');
+}
+
+async function cambiarEstado(id, estado) {
+  const { error } = await SB.from('pedidos').update({ estado }).eq('id', id);
+  if (error) { toast('Error: ' + error.message, 'err'); return; }
+  const p = DB.pedidos.find(x => x.id === id);
+  if (p) p.estado = estado;
+  toast('Estado actualizado ✓');
+}
+
+async function eliminarPedido(id) {
+  if (!confirm('¿Eliminar este pedido?')) return;
+  const { error } = await SB.from('pedidos').delete().eq('id', id);
+  if (error) { toast('Error: ' + error.message, 'err'); return; }
+  DB.pedidos = DB.pedidos.filter(p => p.id !== id);
+  renderPedidos();
+  toast('Pedido eliminado');
+}
+
+// ── EXPORT CSV ─────────────────────────────────────────────
+function exportCSV() {
+  if (!DB.pedidos.length) { toast('No hay pedidos para exportar', 'err'); return; }
+  const cols = ['Fecha','Destino','Zona','Domicilio','Productos','Total','Turno','Prioridad','Estado','Aclaración'];
+  const rows = DB.pedidos.map(p => [
+    p.fecha, p.cliente_nombre, p.zona, p.domicilio || '',
+    (Array.isArray(p.productos) ? p.productos.map(x => `${x.cantidad}x ${x.nombre}`).join(' | ') : ''),
+    p.total, p.turno, p.prioridad, p.estado, (p.aclaracion || '').replace(/,/g, ';')
+  ]);
+  const csv = [cols, ...rows].map(r => r.join(',')).join('\n');
+  const a   = document.createElement('a');
+  a.href    = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = `pedidos_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  toast('CSV exportado ✓');
+}
+
+// ── INIT ───────────────────────────────────────────────────
+async function main() {
+  $('setup-sql-block').textContent = SQL;
+  $('cfg-sql-block').textContent   = SQL;
+
+  const cfg = loadCfg();
+  if (!cfg) { showScreen('setup'); return; }
+
+  loading(true, 'Conectando...');
+  try {
+    SB = supabase.createClient(cfg.url, cfg.key);
+    const { data: { session } } = await SB.auth.getSession();
+    loading(false);
+    if (session) { user = session.user; await bootApp(); }
+    else showScreen('auth');
+  } catch (e) {
+    loading(false);
+    showScreen('setup');
+  }
+}
+
+// Enter key on auth forms
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  const authActive = $('screen-auth').classList.contains('active');
+  if (!authActive) return;
+  if ($('form-login').style.display !== 'none') doLogin();
+  else doRegister();
+});
+
+main();
+</script>
+</body>
+</html>
