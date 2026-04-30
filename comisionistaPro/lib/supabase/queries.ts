@@ -1,201 +1,96 @@
 import { createClient } from './server'
 import type {
   Client,
-  Consultation,
-  ConsultationWithClient,
-  ConsultationWithMessages,
-  ConsultationStatus,
+  Package,
+  PackageWithClient,
+  PackageStatus,
+  Trip,
+  TripType,
   DashboardStats,
-  Message,
-  ParsedTripData,
+  ParsedPackage,
 } from '@/lib/types'
-
-// ─── Clients ──────────────────────────────────────────────────────────────────
 
 export async function getOrCreateClient(phone: string, name?: string): Promise<Client> {
   const supabase = await createClient()
-
-  const { data: existing } = await supabase
-    .from('clients')
-    .select('*')
-    .eq('phone', phone)
-    .single()
-
+  const { data: existing } = await supabase.from('clients').select('*').eq('phone', phone).single()
   if (existing) {
     if (name && !existing.name) {
-      const { data: updated } = await supabase
-        .from('clients')
-        .update({ name })
-        .eq('id', existing.id)
-        .select()
-        .single()
+      const { data: updated } = await supabase.from('clients').update({ name }).eq('id', existing.id).select().single()
       return updated ?? existing
     }
     return existing
   }
-
-  const { data: created, error } = await supabase
-    .from('clients')
-    .insert({ phone, name: name ?? null })
-    .select()
-    .single()
-
+  const { data, error } = await supabase.from('clients').insert({ phone, name: name ?? null }).select().single()
   if (error) throw new Error(`Error creando cliente: ${error.message}`)
-  return created
+  return data
 }
 
-export async function getClients(): Promise<Client[]> {
+export async function getAvailableTrips(fromDate?: string): Promise<Trip[]> {
   const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('clients')
-    .select('*')
-    .order('created_at', { ascending: false })
+  const today = new Date().toISOString().split('T')[0]
+  const { data, error } = await supabase.from('trips').select('*').gte('date', fromDate ?? today).order('date', { ascending: true })
   if (error) throw error
   return data ?? []
 }
 
-// ─── Consultations ────────────────────────────────────────────────────────────
-
-export async function getConsultations(
-  status?: ConsultationStatus,
-): Promise<ConsultationWithClient[]> {
+export async function getTripByDateAndType(date: string, type: TripType): Promise<Trip | null> {
   const supabase = await createClient()
+  const { data } = await supabase.from('trips').select('*').eq('date', date).eq('type', type).single()
+  return data ?? null
+}
 
-  let query = supabase
-    .from('consultations')
-    .select('*, client:clients(*)')
-    .order('created_at', { ascending: false })
+export async function createTrip(date: string, type: TripType, maxCapacity = 5): Promise<Trip> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.from('trips').insert({ date, type, max_capacity: maxCapacity }).select().single()
+  if (error) throw new Error(`Error creando viaje: ${error.message}`)
+  return data
+}
 
+export async function getPackages(status?: PackageStatus): Promise<PackageWithClient[]> {
+  const supabase = await createClient()
+  let query = supabase.from('packages').select('*, client:clients(*), trip:trips(*)').order('created_at', { ascending: false })
   if (status) query = query.eq('status', status)
-
   const { data, error } = await query
   if (error) throw error
-  return (data ?? []) as ConsultationWithClient[]
+  return (data ?? []) as PackageWithClient[]
 }
 
-export async function getConsultation(id: string): Promise<ConsultationWithMessages | null> {
+export async function getPackage(id: string): Promise<PackageWithClient | null> {
   const supabase = await createClient()
-
-  const { data, error } = await supabase
-    .from('consultations')
-    .select('*, client:clients(*), messages(*)')
-    .eq('id', id)
-    .order('created_at', { referencedTable: 'messages', ascending: true })
-    .single()
-
-  if (error) return null
-  return data as ConsultationWithMessages
+  const { data } = await supabase.from('packages').select('*, client:clients(*), trip:trips(*)').eq('id', id).single()
+  return (data as PackageWithClient) ?? null
 }
 
-export async function createConsultation(
-  clientId: string,
-  parsed: ParsedTripData,
-  rawMessage: string,
-): Promise<Consultation> {
+export async function createPackage(clientId: string, parsed: ParsedPackage, rawMessage: string, tripId: string | null, waMessageId?: string): Promise<Package> {
   const supabase = await createClient()
-
-  const { data, error } = await supabase
-    .from('consultations')
-    .insert({
-      client_id: clientId,
-      origin: parsed.origin,
-      destination: parsed.destination,
-      travel_date: parsed.travel_date,
-      travel_time: parsed.travel_time,
-      passengers: parsed.passengers,
-      raw_message: rawMessage,
-      status: 'pending',
-    })
-    .select()
-    .single()
-
-  if (error) throw new Error(`Error creando consulta: ${error.message}`)
+  const { data, error } = await supabase.from('packages').insert({
+    client_id: clientId, trip_id: tripId,
+    origin_address: parsed.origen.direccion, origin_city: parsed.origen.ciudad, origin_province: parsed.origen.provincia,
+    destination_address: parsed.destino.direccion, destination_city: parsed.destino.ciudad, destination_province: parsed.destino.provincia,
+    travel_date: parsed.fecha, trip_type: parsed.tipo_viaje,
+    status: parsed.estado, reason: parsed.motivo || null, notes: parsed.observaciones || null,
+    raw_message: rawMessage, wa_message_id: waMessageId ?? null,
+  }).select().single()
+  if (error) throw new Error(`Error creando pedido: ${error.message}`)
   return data
 }
 
-export async function updateConsultation(
-  id: string,
-  fields: Partial<
-    Pick<
-      Consultation,
-      | 'origin'
-      | 'destination'
-      | 'travel_date'
-      | 'travel_time'
-      | 'passengers'
-      | 'status'
-      | 'notes'
-    >
-  >,
-): Promise<Consultation> {
+export async function updatePackage(id: string, fields: Partial<Pick<Package, 'status' | 'trip_id' | 'notes' | 'reason' | 'wa_reply_sent'>>): Promise<Package> {
   const supabase = await createClient()
-
-  const { data, error } = await supabase
-    .from('consultations')
-    .update(fields)
-    .eq('id', id)
-    .select()
-    .single()
-
-  if (error) throw new Error(`Error actualizando consulta: ${error.message}`)
+  const { data, error } = await supabase.from('packages').update(fields).eq('id', id).select().single()
+  if (error) throw new Error(`Error actualizando pedido: ${error.message}`)
   return data
 }
-
-// ─── Messages ─────────────────────────────────────────────────────────────────
-
-export async function createMessage(
-  clientId: string,
-  content: string,
-  options: {
-    consultationId?: string
-    whatsappMessageId?: string
-    direction?: 'inbound' | 'outbound'
-  } = {},
-): Promise<Message> {
-  const supabase = await createClient()
-
-  const { data, error } = await supabase
-    .from('messages')
-    .insert({
-      client_id: clientId,
-      consultation_id: options.consultationId ?? null,
-      whatsapp_message_id: options.whatsappMessageId ?? null,
-      direction: options.direction ?? 'inbound',
-      content,
-    })
-    .select()
-    .single()
-
-  if (error) throw new Error(`Error guardando mensaje: ${error.message}`)
-  return data
-}
-
-export async function getMessages(consultationId: string): Promise<Message[]> {
-  const supabase = await createClient()
-  const { data, error } = await supabase
-    .from('messages')
-    .select('*')
-    .eq('consultation_id', consultationId)
-    .order('created_at', { ascending: true })
-  if (error) throw error
-  return data ?? []
-}
-
-// ─── Stats ────────────────────────────────────────────────────────────────────
 
 export async function getDashboardStats(): Promise<DashboardStats> {
   const supabase = await createClient()
-
-  const { data, error } = await supabase
-    .from('consultations')
-    .select('status')
-
-  if (error) throw error
-
-  const stats: DashboardStats = { total: 0, pending: 0, quoted: 0, confirmed: 0, cancelled: 0 }
+  const { data } = await supabase.from('packages').select('status')
+  const stats: DashboardStats = { total: 0, pending: 0, confirmed: 0, rejected: 0 }
   for (const row of data ?? []) {
     stats.total++
-    stats[row.status as ConsultationStatus]++
+    if (row.status === 'PENDIENTE')  stats.pending++
+    if (row.status === 'CONFIRMADO') stats.confirmed++
+    if (row.status === 'RECHAZADO')  stats.rejected++
   }
   return stats
 }
