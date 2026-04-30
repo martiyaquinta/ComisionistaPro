@@ -94,3 +94,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   }
   return stats
 }
+
+// ─── Aliases para compatibilidad con dashboard existente ──────────────────────
+export const getConsultations = getPackages
+export const getConsultation  = getPackage

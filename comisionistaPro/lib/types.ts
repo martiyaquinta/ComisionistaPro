@@ -104,3 +104,14 @@ export interface WhatsAppWebhookPayload {
     }>
   }>
 }
+
+// ─── Aliases v1 → v2 (compatibilidad con componentes existentes) ──────────────
+export type ConsultationStatus = PackageStatus
+export type ConsultationWithClient = PackageWithClient
+export type ConsultationWithMessages = PackageWithClient & { messages: Message[] }
+export type Message = {
+  id: string; consultation_id: string | null; client_id: string
+  whatsapp_message_id: string | null; direction: 'inbound' | 'outbound'
+  content: string; created_at: string
+}
+export type ParsedTripData = ParsedPackage

@@ -16,9 +16,9 @@ export default async function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Consultas</h1>
+          <h1 className="text-2xl font-bold">Pedidos de encomiendas</h1>
           <p className="text-sm text-muted-foreground">
-            {stats.total} consulta{stats.total !== 1 ? 's' : ''} en total · actualización en tiempo real
+            {stats.total} pedido{stats.total !== 1 ? 's' : ''} en total · actualización en tiempo real
           </p>
         </div>
       </div>

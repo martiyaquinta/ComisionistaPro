@@ -198,13 +198,22 @@ export function parseWhatsAppMessage(text: string): ParsedTripData {
   const { origin, destination } = parseRoute(text)
 
   return {
-    origin,
-    destination,
+    cliente: parseClientName(text),
+    origen: { direccion: null, ciudad: origin, provincia: null },
+    destino: { direccion: null, ciudad: destination, provincia: null },
     travel_date: parseDate(text),
+    fecha: parseDate(text),
     travel_time: parseTime(text),
     passengers: parsePassengers(text),
     client_name: parseClientName(text),
-  }
+    tipo_viaje: null,
+    estado: 'PENDIENTE',
+    motivo: '',
+    observaciones: '',
+    incompleto: !origin || !destination,
+    campos_faltantes: [],
+    respuesta_whatsapp: '',
+  } as unknown as ParsedTripData
 }
 
 // ─── Formato legible ──────────────────────────────────────────────────────────

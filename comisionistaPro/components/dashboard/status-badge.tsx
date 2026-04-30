@@ -1,18 +1,13 @@
 import { Badge } from '@/components/ui/badge'
-import type { ConsultationStatus } from '@/lib/types'
+import type { PackageStatus } from '@/lib/types'
 
-const CONFIG: Record<ConsultationStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; className: string }> = {
-  pending:   { label: 'Pendiente',  variant: 'outline',      className: 'border-yellow-400 text-yellow-600 dark:text-yellow-400' },
-  quoted:    { label: 'Cotizada',   variant: 'outline',      className: 'border-blue-400 text-blue-600 dark:text-blue-400' },
-  confirmed: { label: 'Confirmada', variant: 'default',      className: 'bg-green-500 hover:bg-green-600 text-white border-0' },
-  cancelled: { label: 'Cancelada',  variant: 'destructive',  className: '' },
+const CONFIG: Record<PackageStatus, { label: string; className: string }> = {
+  PENDIENTE:  { label: 'Pendiente',  className: 'border-yellow-400 text-yellow-600 dark:text-yellow-400' },
+  CONFIRMADO: { label: 'Confirmado', className: 'bg-green-500 hover:bg-green-600 text-white border-0' },
+  RECHAZADO:  { label: 'Rechazado',  className: 'bg-red-500 hover:bg-red-600 text-white border-0' },
 }
 
-export function StatusBadge({ status }: { status: ConsultationStatus }) {
-  const { label, variant, className } = CONFIG[status]
-  return (
-    <Badge variant={variant} className={className}>
-      {label}
-    </Badge>
-  )
+export function StatusBadge({ status }: { status: PackageStatus | string }) {
+  const cfg = CONFIG[status as PackageStatus] ?? { label: status, className: '' }
+  return <Badge variant="outline" className={cfg.className}>{cfg.label}</Badge>
 }

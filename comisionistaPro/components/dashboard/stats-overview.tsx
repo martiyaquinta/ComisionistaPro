@@ -1,36 +1,12 @@
 import { Card, CardContent } from '@/components/ui/card'
 import type { DashboardStats } from '@/lib/types'
-import { Clock, CheckCircle2, FileText, XCircle } from 'lucide-react'
+import { Clock, CheckCircle2, XCircle, Package } from 'lucide-react'
 
 const STATS = [
-  {
-    key: 'pending' as const,
-    label: 'Pendientes',
-    icon: Clock,
-    color: 'text-yellow-500',
-    bg: 'bg-yellow-50 dark:bg-yellow-950/30',
-  },
-  {
-    key: 'quoted' as const,
-    label: 'Cotizadas',
-    icon: FileText,
-    color: 'text-blue-500',
-    bg: 'bg-blue-50 dark:bg-blue-950/30',
-  },
-  {
-    key: 'confirmed' as const,
-    label: 'Confirmadas',
-    icon: CheckCircle2,
-    color: 'text-green-500',
-    bg: 'bg-green-50 dark:bg-green-950/30',
-  },
-  {
-    key: 'cancelled' as const,
-    label: 'Canceladas',
-    icon: XCircle,
-    color: 'text-red-400',
-    bg: 'bg-red-50 dark:bg-red-950/30',
-  },
+  { key: 'total'     as const, label: 'Total',       icon: Package,      color: 'text-violet-500', bg: 'bg-violet-50 dark:bg-violet-950/30' },
+  { key: 'pending'   as const, label: 'Pendientes',  icon: Clock,        color: 'text-yellow-500', bg: 'bg-yellow-50 dark:bg-yellow-950/30' },
+  { key: 'confirmed' as const, label: 'Confirmados', icon: CheckCircle2, color: 'text-green-500',  bg: 'bg-green-50 dark:bg-green-950/30'  },
+  { key: 'rejected'  as const, label: 'Rechazados',  icon: XCircle,      color: 'text-red-400',    bg: 'bg-red-50 dark:bg-red-950/30'      },
 ]
 
 export function StatsOverview({ stats }: { stats: DashboardStats }) {
