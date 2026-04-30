@@ -1,4 +1,14 @@
+// Argentina: el webhook recibe 5492266... pero la API envía a 542266...
+function normalizeArgentinePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '')
+  if (digits.startsWith('549') && digits.length === 13) {
+    return '54' + digits.slice(3)
+  }
+  return digits
+}
+
 export async function sendWhatsAppMessage(to: string, message: string): Promise<boolean> {
+  to = normalizeArgentinePhone(to)
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID
   const accessToken   = process.env.WHATSAPP_ACCESS_TOKEN
 
