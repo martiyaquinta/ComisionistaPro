@@ -1,6 +1,4 @@
-export type ConsultationStatus = 'pending' | 'quoted' | 'confirmed' | 'cancelled'
-export type MessageDirection = 'inbound' | 'outbound'
-
+// ─── Clientes ─────────────────────────────────────────────────────────────────
 export interface Client {
   id: string
   phone: string
@@ -10,58 +8,74 @@ export interface Client {
   updated_at: string
 }
 
-export interface Consultation {
+// ─── Viajes del día ───────────────────────────────────────────────────────────
+export type TripType = 'HACIA_MAR_DEL_PLATA' | 'DESDE_MAR_DEL_PLATA'
+
+export interface Trip {
+  id: string
+  date: string
+  type: TripType
+  max_capacity: number
+  current_count: number
+  notes: string | null
+  created_at: string
+}
+
+// ─── Pedidos de encomiendas ───────────────────────────────────────────────────
+export type PackageStatus = 'CONFIRMADO' | 'PENDIENTE' | 'RECHAZADO'
+
+export interface Package {
   id: string
   client_id: string
-  origin: string | null
-  destination: string | null
+  trip_id: string | null
+  origin_address: string | null
+  origin_city: string | null
+  origin_province: string | null
+  destination_address: string | null
+  destination_city: string | null
+  destination_province: string | null
   travel_date: string | null
-  travel_time: string | null
-  passengers: number
-  status: ConsultationStatus
+  trip_type: TripType | null
+  package_type: string | null
+  status: PackageStatus
+  reason: string | null
   notes: string | null
   raw_message: string | null
+  wa_message_id: string | null
+  wa_reply_sent: boolean
   created_at: string
   updated_at: string
 }
 
-export interface ConsultationWithClient extends Consultation {
+export interface PackageWithClient extends Package {
   client: Client
+  trip?: Trip | null
 }
 
-export interface ConsultationWithMessages extends Consultation {
-  client: Client
-  messages: Message[]
+// ─── Salida del parser IA ─────────────────────────────────────────────────────
+export interface ParsedPackage {
+  cliente: string | null
+  origen: { direccion: string | null; ciudad: string | null; provincia: string | null }
+  destino: { direccion: string | null; ciudad: string | null; provincia: string | null }
+  fecha: string | null
+  tipo_viaje: TripType | null
+  estado: PackageStatus
+  motivo: string
+  observaciones: string
+  incompleto: boolean
+  campos_faltantes: string[]
+  respuesta_whatsapp: string
 }
 
-export interface Message {
-  id: string
-  consultation_id: string | null
-  client_id: string
-  whatsapp_message_id: string | null
-  direction: MessageDirection
-  content: string
-  created_at: string
-}
-
-export interface ParsedTripData {
-  origin: string | null
-  destination: string | null
-  travel_date: string | null
-  travel_time: string | null
-  passengers: number
-  client_name: string | null
-}
-
+// ─── Stats ────────────────────────────────────────────────────────────────────
 export interface DashboardStats {
   total: number
   pending: number
-  quoted: number
   confirmed: number
-  cancelled: number
+  rejected: number
 }
 
-// WhatsApp Cloud API payload types
+// ─── WhatsApp Cloud API ───────────────────────────────────────────────────────
 export interface WhatsAppTextMessage {
   id: string
   from: string
