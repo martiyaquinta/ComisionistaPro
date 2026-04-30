@@ -98,3 +98,14 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 // ─── Aliases para compatibilidad con dashboard existente ──────────────────────
 export const getConsultations = getPackages
 export const getConsultation  = getPackage
+
+export async function getConversationState(clientId: string): Promise<string | null> {
+  const supabase = await createClient()
+  const { data } = await supabase.from('clients').select('conversation_state').eq('id', clientId).single()
+  return (data as any)?.conversation_state ?? null
+}
+
+export async function setConversationState(clientId: string, state: string | null): Promise<void> {
+  const supabase = await createClient()
+  await supabase.from('clients').update({ conversation_state: state } as any).eq('id', clientId)
+}
